@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Organizer{% endblock %} · Hackathon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <p class="eyebrow">Hackathon organizer</p>
+        <h1>{% block heading %}Dashboard{% endblock %}</h1>
+        <p class="lede">{% block lede %}{% endblock %}</p>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul class="flash-list" role="status">
+            {% for category, message in messages %}
+              <li class="flash flash--{{ category }}">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+
+      <main class="main">{% block content %}{% endblock %}</main>
+
+      <footer class="footer">
+        <span>Session demo — replace with OAuth and a database when you wire real accounts.</span>
+      </footer>
+    </div>
+  </body>
+</html>

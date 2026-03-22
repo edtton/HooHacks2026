@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Connect channels{% endblock %}
+{% block heading %}Connect your channels{% endblock %}
+{% block lede %}
+  Link your social profiles for the event page. Anything that does not live on Instagram,
+  LinkedIn, or TikTok can go in the other section below.
+{% endblock %}
+
+{% block content %}
+  <section class="section" aria-labelledby="social-heading">
+    <h2 id="social-heading" class="section-title">Social platforms</h2>
+    <p class="section-desc">
+      Paste your public profile URL for each platform. Full OAuth flows can plug into these same
+      slots later.
+    </p>
+
+    <div class="grid grid--3">
+      {% for key, name, hint in [
+        ('instagram', 'Instagram', 'instagram.com/yourhandle'),
+        ('linkedin', 'LinkedIn', 'linkedin.com/in/…'),
+        ('tiktok', 'TikTok', 'tiktok.com/@…'),
+      ] %}
+        <article class="card">
+          <div class="card-icon card-icon--{{ key }}" aria-hidden="true"></div>
+          <h3 class="card-title">{{ name }}</h3>
+          <form method="post" class="card-form">
+            <input type="hidden" name="action" value="social" />
+            <input type="hidden" name="platform" value="{{ key }}" />
+            <label class="label" for="url-{{ key }}">Profile URL</label>
+            <input
+              class="input"
+              id="url-{{ key }}"
+              name="profile_url"
+              type="url"
+              inputmode="url"
+              autocomplete="url"
+              placeholder="https://{{ hint }}"
+              value="{{ social[key] or '' }}"
+            />
+            <button type="submit" class="btn btn--primary">Save {{ name }} link</button>
+          </form>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section section--other" aria-labelledby="other-heading">
+    <h2 id="other-heading" class="section-title">Other links &amp; uploads</h2>
+    <p class="section-desc">
+      Portfolio sites, GitHub, YouTube, press articles, or files that are not tied to the three
+      platforms above.
+    </p>
+
+    <div class="card card--wide">
+      <form method="post" enctype="multipart/form-data" class="other-form">
+        <input type="hidden" name="action" value="other" />
+        <label class="label" for="other-links">Links &amp; notes</label>
+        <textarea
+          class="textarea"
+          id="other-links"
+          name="other_links"
+          rows="6"
+          placeholder="One URL per line, or short notes for your team…"
+        >{{ other_links }}</textarea>
+
+        <div class="upload-row">
+          <label class="label" for="file">Upload a file (optional)</label>
+          <input
+            class="input input--file"
+            id="file"
+            name="file"
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.doc,.docx"
+          />
+          <p class="hint">PDF, images, or text/doc formats up to your server limits.</p>
+        </div>
+
+        <button type="submit" class="btn btn--accent">Save other content</button>
+      </form>
+
+      {% if uploaded_files %}
+        <div class="uploaded">
+          <p class="label">Uploaded this session</p>
+          <ul class="file-list">
+            {% for f in uploaded_files %}
+              <li><code>{{ f }}</code></li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}
