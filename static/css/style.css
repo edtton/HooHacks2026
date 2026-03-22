@@ -111,6 +111,35 @@ h1 {
 
 .card--wide {
   max-width: 100%;
+  position: relative;
+}
+
+/* ── Per-source clear button ── */
+.card-clear-form {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  margin: 0;
+  padding: 0;
+}
+
+.btn-clear {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-family: inherit;
+  padding: 0.2rem 0.45rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.btn-clear:hover {
+  color: var(--danger);
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.08);
 }
 
 .card-icon {

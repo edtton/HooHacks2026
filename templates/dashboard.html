@@ -10,6 +10,12 @@
 
     <div class="card card--wide card--instagram">
       <div class="card-icon card-icon--instagram" aria-hidden="true"></div>
+      {% if instagram %}
+        <form method="post" class="card-clear-form">
+          <input type="hidden" name="action" value="clear_instagram" />
+          <button type="submit" class="btn-clear" title="Remove Instagram source">✕ Clear</button>
+        </form>
+      {% endif %}
       <form id="instagram-form" method="post" class="card-form card-form--row">
         <input type="hidden" name="action" value="instagram" />
         <div class="field-grow">
@@ -96,6 +102,12 @@
 
     <div class="card card--wide card--website">
       <div class="card-icon card-icon--website" aria-hidden="true"></div>
+      {% if website_url %}
+        <form method="post" class="card-clear-form">
+          <input type="hidden" name="action" value="clear_website" />
+          <button type="submit" class="btn-clear" title="Remove website source">✕ Clear</button>
+        </form>
+      {% endif %}
       <form id="website-form" method="post" class="card-form card-form--row">
         <input type="hidden" name="action" value="website" />
         <div class="field-grow">
@@ -134,6 +146,12 @@
     <div class="card card--wide card--uploads">
       <div class="card-icon card-icon--uploads" aria-hidden="true"></div>
 
+      {% if uploaded_files %}
+        <form method="post" class="card-clear-form">
+          <input type="hidden" name="action" value="clear_documents" />
+          <button type="submit" class="btn-clear" title="Remove all uploaded documents">✕ Clear all</button>
+        </form>
+      {% endif %}
       <form method="post" enctype="multipart/form-data" class="card-form upload-form">
         <input type="hidden" name="action" value="upload" />
         <!-- <label class="label" for="upload-files">
@@ -150,7 +168,7 @@
             accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip"
           />
         </div>
-        <p class="hint">PDF, images, Office docs, spreadsheets, CSV, ZIP — up to 16 MB each by default.</p>
+        <p class="hint">PDF, images, Office docs, spreadsheets, CSV, ZIP — up to 100 MB each by default.</p>
         <button type="submit" class="btn btn--primary" id="upload-btn">Upload files</button>
       </form>
 

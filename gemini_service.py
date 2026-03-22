@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 
 MLH_GUIDE_URL = "https://guide.mlh.io/"
 MLH_GUIDELINES_URL = (
@@ -115,13 +116,31 @@ def evaluate(context: dict) -> list[dict]:
         config=GenerateContentConfig(tools=[{"url_context": {}}]),
     )
 
-    raw = (response.text or "").strip()
-    # Strip markdown code fences if the model wrapped JSON in ```json ... ```.
-    if raw.startswith("```"):
-        raw = raw.lstrip("`")
-        if raw.startswith("json"):
-            raw = raw[4:]
-        raw = raw.rstrip("`").strip()
+    # Gemini 2.5 Flash is a thinking model: response.text concatenates ALL
+    # content parts including the chain-of-thought reasoning preamble.  Filter
+    # to only the parts where thought=False (the actual answer) before parsing.
+    raw_parts: list[str] = []
+    for candidate in response.candidates:
+        for part in candidate.content.parts:
+            if getattr(part, "thought", False):
+                continue
+            if getattr(part, "text", None):
+                raw_parts.append(part.text)
+
+    raw = "\n".join(raw_parts).strip()
+
+    # Fall back to response.text if the parts API gave us nothing.
+    if not raw:
+        raw = (response.text or "").strip()
+
+    # Strip markdown code fences (``` or ```json ... ```).
+    raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.IGNORECASE)
+    raw = re.sub(r"\s*```$", "", raw).strip()
+
+    # Locate the JSON array even if there is stray text around it.
+    match = re.search(r"\[[\s\S]*\]", raw)
+    if match:
+        raw = match.group(0)
 
     try:
         result = json.loads(raw)

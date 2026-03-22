@@ -18,7 +18,12 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-change-me-in-production")
+
+# this is terrible but we aint got time to do it properly rn 
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", os.urandom(24).hex())
+app.config["MAX_CONTENT_LENGTH"] = int(
+    os.environ.get("MAX_UPLOAD_MB", "100")
+) * 1024 * 1024  # default 100 MB; override with MAX_UPLOAD_MB env var
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 _raw_download = os.environ.get("INSTALOADER_DOWNLOAD_DIR", "instaloader_downloads")
@@ -230,6 +235,33 @@ def dashboard():
                 flash(f"Uploaded {len(saved)} file{'s' if len(saved) != 1 else ''}.", "success")
             for msg in errors:
                 flash(msg, "error")
+            return redirect(url_for("dashboard"))
+
+        # ── Clear individual sources ───────────────────────────────────────────
+        if action == "clear_instagram":
+            for key in ("instagram", "instagram_profile", "instagram_error",
+                        "instagram_download_path", "instagram_download_summary"):
+                session.pop(key, None)
+            session.modified = True
+            flash("Instagram source cleared.", "success")
+            return redirect(url_for("dashboard"))
+
+        if action == "clear_website":
+            for key in ("website_url", "website_analysis", "website_error"):
+                session.pop(key, None)
+            session.modified = True
+            flash("Website source cleared.", "success")
+            return redirect(url_for("dashboard"))
+
+        if action == "clear_documents":
+            for filename in session.get("uploaded_files", []):
+                try:
+                    (UPLOAD_DIR / filename).unlink(missing_ok=True)
+                except OSError:
+                    pass
+            session.pop("uploaded_files", None)
+            session.modified = True
+            flash("All uploaded documents cleared.", "success")
             return redirect(url_for("dashboard"))
 
         if action == "delete_upload":
