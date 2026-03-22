@@ -1,3 +1,10 @@
 flask>=3.0.0
 apify-client>=1.7.0
 playwright>=1.40.0
+instaloader>=4.10
+trafilatura>=1.9.0
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+pdfplumber>=0.10.0
+google-genai>=1.0.0
+python-dotenv>=1.0.0

@@ -1,93 +1,265 @@
 {% extends "base.html" %}
 {% block title %}Connect channels{% endblock %}
 {% block heading %}Connect your channels{% endblock %}
-{% block lede %}
-  Link your social profiles for the event page. Anything that does not live on Instagram,
-  LinkedIn, or TikTok can go in the other section below.
-{% endblock %}
 
 {% block content %}
-  <section class="section" aria-labelledby="social-heading">
-    <h2 id="social-heading" class="section-title">Social platforms</h2>
-    <p class="section-desc">
-      Paste your public profile URL for each platform. Full OAuth flows can plug into these same
-      slots later.
-    </p>
 
-    <div class="grid grid--3">
-      {% for key, name, hint in [
-        ('instagram', 'Instagram', 'instagram.com/yourhandle'),
-        ('linkedin', 'LinkedIn', 'linkedin.com/in/…'),
-        ('tiktok', 'TikTok', 'tiktok.com/@…'),
-      ] %}
-        <article class="card">
-          <div class="card-icon card-icon--{{ key }}" aria-hidden="true"></div>
-          <h3 class="card-title">{{ name }}</h3>
-          <form method="post" class="card-form">
-            <input type="hidden" name="action" value="social" />
-            <input type="hidden" name="platform" value="{{ key }}" />
-            <label class="label" for="url-{{ key }}">Profile URL</label>
-            <input
-              class="input"
-              id="url-{{ key }}"
-              name="profile_url"
-              type="url"
-              inputmode="url"
-              autocomplete="url"
-              placeholder="https://{{ hint }}"
-              value="{{ social[key] or '' }}"
-            />
-            <button type="submit" class="btn btn--primary">Save {{ name }} link</button>
-          </form>
-        </article>
-      {% endfor %}
+  {# ── Instagram ── #}
+  <section class="section" aria-labelledby="instagram-heading">
+    <h2 id="instagram-heading" class="section-title">Instagram</h2>
+
+    <div class="card card--wide card--instagram">
+      <div class="card-icon card-icon--instagram" aria-hidden="true"></div>
+      <form id="instagram-form" method="post" class="card-form card-form--row">
+        <input type="hidden" name="action" value="instagram" />
+        <div class="field-grow">
+          <label class="label" for="instagram-username">Username</label>
+          <input
+            class="input"
+            id="instagram-username"
+            name="instagram_username"
+            type="text"
+            autocomplete="username"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="nasa"
+            value="{{ instagram or '' }}"
+          />
+        </div>
+        <button type="submit" class="btn btn--primary btn--inline">Save username</button>
+      </form>
+
+      {% if instagram_download_path %}
+        <div class="ig-download" aria-live="polite">
+          <p class="label">Download folder (CLI-style)</p>
+          <p class="ig-path"><code>{{ instagram_download_path }}</code></p>
+          {% if instagram_download_summary and instagram_download_summary.exists %}
+            <p class="ig-filecount">{{ instagram_download_summary.file_count }} files</p>
+            {% if instagram_download_summary.sample_files %}
+              <ul class="ig-files">
+                {% for name in instagram_download_summary.sample_files %}
+                  <li><code>{{ name }}</code></li>
+                {% endfor %}
+              </ul>
+              {% if instagram_download_summary.file_count > (instagram_download_summary.sample_files | length) %}
+                <p class="hint">Showing first {{ instagram_download_summary.sample_files | length }} paths.</p>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if instagram_profile %}
+        <div class="ig-preview" aria-live="polite">
+          <div class="ig-meta">
+            <p class="ig-name">
+              <strong>{{ instagram_profile.full_name or instagram_profile.username }}</strong>
+              <span class="ig-handle">@{{ instagram_profile.username }}</span>
+              {% if instagram_profile.is_verified %}
+                <span class="badge" title="Verified">✓</span>
+              {% endif %}
+            </p>
+            <p class="ig-stats">
+              <span>{{ instagram_profile.followers | int }} followers</span>
+              <span>{{ instagram_profile.following | int }} following</span>
+              <span>{{ instagram_profile.media_count | int }} posts</span>
+            </p>
+            {% if instagram_profile.external_url %}
+              <p class="ig-link">
+                <a href="{{ instagram_profile.external_url }}" rel="noopener noreferrer" target="_blank"
+                  >{{ instagram_profile.external_url }}</a>
+              </p>
+            {% endif %}
+          </div>
+          {% if instagram_profile.biography %}
+            <p class="ig-bio">{{ instagram_profile.biography }}</p>
+          {% endif %}
+          {% if instagram_profile.recent_captions %}
+            <p class="label ig-caption-label">Recent captions (sample)</p>
+            <ul class="ig-captions">
+              {% for cap in instagram_profile.recent_captions %}
+                <li>{{ cap }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% elif instagram_error %}
+        <p class="ig-error" role="alert"><strong>Last error:</strong> {{ instagram_error }}</p>
+      {% endif %}
     </div>
+
   </section>
 
-  <section class="section section--other" aria-labelledby="other-heading">
-    <h2 id="other-heading" class="section-title">Other links &amp; uploads</h2>
-    <p class="section-desc">
-      Portfolio sites, GitHub, YouTube, press articles, or files that are not tied to the three
-      platforms above.
-    </p>
+  {# ── Hackathon Website ── #}
+  <section class="section" aria-labelledby="website-heading">
+    <h2 id="website-heading" class="section-title">Hackathon Website</h2>
 
-    <div class="card card--wide">
-      <form method="post" enctype="multipart/form-data" class="other-form">
-        <input type="hidden" name="action" value="other" />
-        <label class="label" for="other-links">Links &amp; notes</label>
-        <textarea
-          class="textarea"
-          id="other-links"
-          name="other_links"
-          rows="6"
-          placeholder="One URL per line, or short notes for your team…"
-        >{{ other_links }}</textarea>
+    <div class="card card--wide card--website">
+      <div class="card-icon card-icon--website" aria-hidden="true"></div>
+      <form id="website-form" method="post" class="card-form card-form--row">
+        <input type="hidden" name="action" value="website" />
+        <div class="field-grow">
+          <label class="label" for="website-url">Website URL</label>
+          <input
+            class="input"
+            id="website-url"
+            name="website_url"
+            type="url"
+            inputmode="url"
+            autocomplete="url"
+            spellcheck="false"
+            placeholder="https://yourhackathon.com"
+            value="{{ website_url or '' }}"
+          />
+        </div>
+        <button type="submit" class="btn btn--primary btn--inline">Save website</button>
+      </form>
 
-        <div class="upload-row">
-          <label class="label" for="file">Upload a file (optional)</label>
+      {% if website_analysis %}
+        <div class="ig-preview" aria-live="polite">
+          <p class="ig-name"><strong>{{ website_analysis.title }}</strong></p>
+          <p class="ig-bio">{{ website_analysis.description }}</p>
+        </div>
+      {% elif website_error %}
+        <p class="ig-error" role="alert"><strong>Last error:</strong> {{ website_error }}</p>
+      {% endif %}
+    </div>
+
+  </section>
+
+  {# ── Supporting Documents ── #}
+  <section class="section" aria-labelledby="uploads-heading">
+    <h2 id="uploads-heading" class="section-title">Other Materials</h2>
+
+    <div class="card card--wide card--uploads">
+      <div class="card-icon card-icon--uploads" aria-hidden="true"></div>
+
+      <form method="post" enctype="multipart/form-data" class="card-form upload-form">
+        <input type="hidden" name="action" value="upload" />
+        <!-- <label class="label" for="upload-files">
+          Maps, schedules, sponsor decks, participant guides…
+        </label> -->
+        <div class="upload-drop-area" id="upload-drop-area">
+          <p class="upload-drop-hint">Drag files here or click to browse</p>
           <input
             class="input input--file"
-            id="file"
-            name="file"
+            id="upload-files"
+            name="files"
             type="file"
-            accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.doc,.docx"
+            multiple
+            accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.txt,.md,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip"
           />
-          <p class="hint">PDF, images, or text/doc formats up to your server limits.</p>
         </div>
-
-        <button type="submit" class="btn btn--accent">Save other content</button>
+        <p class="hint">PDF, images, Office docs, spreadsheets, CSV, ZIP — up to 16 MB each by default.</p>
+        <button type="submit" class="btn btn--primary" id="upload-btn">Upload files</button>
       </form>
 
       {% if uploaded_files %}
-        <div class="uploaded">
-          <p class="label">Uploaded this session</p>
-          <ul class="file-list">
+        <div class="uploaded-list">
+          <p class="label">Uploaded files</p>
+          <ul class="file-table">
             {% for f in uploaded_files %}
-              <li><code>{{ f }}</code></li>
+              <li class="file-row">
+                <span class="file-row__name"><code>{{ f }}</code></span>
+                <form method="post" class="file-row__delete">
+                  <input type="hidden" name="action" value="delete_upload" />
+                  <input type="hidden" name="filename" value="{{ f }}" />
+                  <button type="submit" class="btn-delete" title="Remove">✕</button>
+                </form>
+              </li>
             {% endfor %}
           </ul>
         </div>
       {% endif %}
     </div>
   </section>
+
+  {# ── Evaluate ── #}
+  <section class="section" aria-labelledby="evaluate-heading">
+    <h2 id="evaluate-heading" class="section-title">Evaluate</h2>
+
+    <div class="card card--wide eval-card{% if not sources_ready %} eval-card--inactive{% endif %}">
+
+      {# source checklist #}
+      <ul class="eval-sources" aria-label="Connected sources">
+        <li class="eval-source {% if instagram %}eval-source--on{% endif %}">
+          <span class="eval-dot"></span>
+          <span class="eval-source__label">Instagram</span>
+          <span class="eval-source__value">
+            {%- if instagram -%}@{{ instagram }}{%- else -%}not connected{%- endif -%}
+          </span>
+        </li>
+        <li class="eval-source {% if website_url %}eval-source--on{% endif %}">
+          <span class="eval-dot"></span>
+          <span class="eval-source__label">Website</span>
+          <span class="eval-source__value">
+            {%- if website_url -%}{{ website_url }}{%- else -%}no URL added{%- endif -%}
+          </span>
+        </li>
+        <li class="eval-source {% if uploaded_files %}eval-source--on{% endif %}">
+          <span class="eval-dot"></span>
+          <span class="eval-source__label">Documents</span>
+          <span class="eval-source__value">
+            {%- if uploaded_files -%}{{ uploaded_files | length }} file{{ 's' if uploaded_files | length != 1 }}{%- else -%}none uploaded{%- endif -%}
+          </span>
+        </li>
+      </ul>
+
+      <form method="post" class="eval-form">
+        <input type="hidden" name="action" value="evaluate" />
+        <button
+          type="submit"
+          class="btn btn--accent eval-btn"
+          {% if not sources_ready %}disabled{% endif %}
+        >
+          Evaluate sources
+        </button>
+        {% if not sources_ready %}
+          <p class="hint">Connect at least one source above to enable evaluation.</p>
+        {% endif %}
+      </form>
+
+      {# link to the last evaluation, if one exists #}
+      {% if eval_id %}
+        <div class="eval-last" aria-live="polite">
+          <a href="{{ url_for('results', eval_id=eval_id) }}" class="btn btn--ghost eval-view-btn">
+            View last results →
+          </a>
+          <p class="hint">Context ID: <code>{{ eval_id }}</code></p>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      // Drag-and-drop highlight for the upload area
+      const dropArea = document.getElementById("upload-drop-area");
+      const fileInput = document.getElementById("upload-files");
+      const uploadBtn = document.getElementById("upload-btn");
+
+      if (dropArea && fileInput) {
+        dropArea.addEventListener("click", () => fileInput.click());
+        ["dragenter", "dragover"].forEach(evt =>
+          dropArea.addEventListener(evt, e => { e.preventDefault(); dropArea.classList.add("drop-active"); })
+        );
+        ["dragleave", "drop"].forEach(evt =>
+          dropArea.addEventListener(evt, () => dropArea.classList.remove("drop-active"))
+        );
+        dropArea.addEventListener("drop", e => {
+          e.preventDefault();
+          if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateBtn(e.dataTransfer.files);
+          }
+        });
+        fileInput.addEventListener("change", () => updateBtn(fileInput.files));
+      }
+
+      function updateBtn(files) {
+        if (uploadBtn && files && files.length)
+          uploadBtn.textContent = `Upload ${files.length} file${files.length !== 1 ? "s" : ""}`;
+      }
+    })();
+  </script>
 {% endblock %}

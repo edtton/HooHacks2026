@@ -2,5 +2,8 @@ __pycache__/
 .venv/
 venv/
 uploads/
+instaloader_downloads/
+evaluations/
 *.pyc
 .env
+scrape_linkedin.py

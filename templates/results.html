@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}MLH Analysis{% endblock %}
+{% block heading %}MLH Compliance Analysis{% endblock %}
+{% block lede %}Questions a first-time hacker would ask, checked against your content.{% endblock %}
+
+{% block content %}
+
+  <div class="results-nav">
+    <a href="{{ url_for('dashboard') }}" class="btn btn--ghost">&larr; Back to dashboard</a>
+    <p class="hint results-nav__id">Context ID: <code>{{ eval_id }}</code></p>
+  </div>
+
+  {% set sources = context.get("sources", {}) %}
+  {% set analysis = context.get("llm_analysis", []) %}
+  {% set llm_error = context.get("llm_error") %}
+
+  {# ── LLM Analysis ── #}
+  {% if analysis %}
+
+    {# Summary counts #}
+    {% set found_count   = analysis | selectattr("status", "eq", "found")     | list | length %}
+    {% set partial_count = analysis | selectattr("status", "eq", "partial")   | list | length %}
+    {% set missing_count = analysis | selectattr("status", "eq", "not_found") | list | length %}
+    {% set total = analysis | length %}
+
+    <section class="section" aria-labelledby="analysis-heading">
+      <h2 id="analysis-heading" class="section-title">Results</h2>
+
+      <div class="analysis-summary">
+        <span class="analysis-stat analysis-stat--found">
+          <span class="analysis-stat__num">{{ found_count }}</span>
+          <span class="analysis-stat__label">answered</span>
+        </span>
+        <span class="analysis-stat analysis-stat--partial">
+          <span class="analysis-stat__num">{{ partial_count }}</span>
+          <span class="analysis-stat__label">partial</span>
+        </span>
+        <span class="analysis-stat analysis-stat--missing">
+          <span class="analysis-stat__num">{{ missing_count }}</span>
+          <span class="analysis-stat__label">missing</span>
+        </span>
+        <span class="analysis-stat analysis-stat--total">
+          <span class="analysis-stat__num">{{ total }}</span>
+          <span class="analysis-stat__label">total questions</span>
+        </span>
+      </div>
+
+      <p class="hint analysis-hint">
+        Click any row to see the answer excerpt or recommendation.
+        Reference: <a href="https://guide.mlh.io/" target="_blank" rel="noopener noreferrer" class="results-link">MLH Organizer Guide</a>
+        &amp; <a href="https://github.com/MLH/mlh-policies/blob/main/member-event-guidelines.md" target="_blank" rel="noopener noreferrer" class="results-link">Member Event Guidelines</a>
+      </p>
+
+      <div class="analysis-list" role="list">
+        {% for item in analysis %}
+          <details class="analysis-item analysis-item--{{ item.status }}" role="listitem">
+            <summary class="analysis-item__summary">
+              <span class="analysis-badge analysis-badge--{{ item.status }}">
+                {%- if item.status == "found" -%}✓ Found
+                {%- elif item.status == "partial" -%}~ Partial
+                {%- else -%}✗ Missing{%- endif -%}
+              </span>
+              <span class="analysis-item__question">{{ item.question }}</span>
+              {% if item.source %}
+                <span class="analysis-item__source">{{ item.source }}</span>
+              {% endif %}
+            </summary>
+
+            <div class="analysis-item__body">
+              {% if item.answer_excerpt %}
+                <div class="analysis-item__block analysis-item__block--answer">
+                  <p class="label">Answer found</p>
+                  <p class="analysis-item__text">{{ item.answer_excerpt }}</p>
+                </div>
+              {% endif %}
+              {% if item.recommendation %}
+                <div class="analysis-item__block analysis-item__block--rec">
+                  <p class="label">Recommendation</p>
+                  <p class="analysis-item__text">{{ item.recommendation }}</p>
+                </div>
+              {% endif %}
+            </div>
+          </details>
+        {% endfor %}
+      </div>
+    </section>
+
+  {% elif llm_error %}
+
+    <div class="analysis-error" role="alert">
+      <p class="label">Gemini evaluation failed</p>
+      <p>{{ llm_error }}</p>
+      <p class="hint">Check that <code>GEMINI_API_KEY</code> is set in your environment and the API is reachable.</p>
+    </div>
+
+  {% else %}
+
+    <div class="analysis-error" role="alert">
+      <p>No LLM analysis available for this evaluation. Re-run from the dashboard to generate it.</p>
+    </div>
+
+  {% endif %}
+
+  {# ── Collected Sources (collapsible) ── #}
+  <section class="section" aria-labelledby="sources-heading">
+    <h2 id="sources-heading" class="section-title">Collected Sources</h2>
+
+    <details class="sources-details">
+      <summary class="sources-details__toggle">
+        View raw collected content
+        ({% if sources.website %}website{% endif %}
+        {%- if sources.instagram %}, Instagram{% endif %}
+        {%- if sources.documents %}, {{ sources.documents | length }} doc{{ 's' if sources.documents | length != 1 }}{% endif %})
+      </summary>
+
+      <div class="sources-details__body">
+
+        {# Instagram #}
+        {% if sources.instagram %}
+          {% set ig = sources.instagram %}
+          <div class="results-card results-card--sub">
+            <p class="label">Instagram — @{{ ig.username }}</p>
+            <div class="results-meta">
+              <p class="results-meta__row">
+                <span class="label">Download folder</span>
+                <code class="results-path">{{ ig.download_path }}</code>
+              </p>
+              {% if ig.caption_count %}
+                <p class="results-meta__row">
+                  <span class="label">Captions loaded</span>
+                  <span>{{ ig.caption_count }}</span>
+                </p>
+              {% endif %}
+            </div>
+            {% if ig.captions %}
+              <ol class="caption-list">
+                {% for cap in ig.captions %}
+                  <li class="caption-list__item">{{ cap }}</li>
+                {% endfor %}
+              </ol>
+            {% else %}
+              <p class="hint">No captions extracted from <code>{{ ig.download_path }}</code>.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {# Website #}
+        {% if sources.website %}
+          {% set site = sources.website %}
+          <div class="results-card results-card--sub">
+            <p class="label">
+              Website —
+              <a href="{{ site.url }}" target="_blank" rel="noopener noreferrer" class="results-link">{{ site.url }}</a>
+            </p>
+            <div class="results-meta">
+              <p class="results-meta__row">
+                <span class="label">Pages scraped</span><span>{{ site.pages_scraped }}</span>
+              </p>
+              <p class="results-meta__row">
+                <span class="label">Characters</span>
+                <span>{{ "{:,}".format(site.char_count) }}{% if site.truncated %} <span class="badge">truncated</span>{% endif %}</span>
+              </p>
+            </div>
+            {% if site.text %}
+              <div class="results-text-wrap">
+                <div class="results-text">{{ site.text }}</div>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {# Documents #}
+        {% if sources.documents %}
+          {% for doc in sources.documents %}
+            <div class="results-card results-card--sub">
+              <p class="label">Document — <code>{{ doc.filename }}</code></p>
+              {% if doc.error %}
+                <p class="ig-error" role="alert">{{ doc.error }}</p>
+              {% elif doc.text %}
+                <div class="results-text-wrap">
+                  <div class="results-text">{{ doc.text }}</div>
+                </div>
+              {% else %}
+                <p class="hint">No text content extracted.</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+      </div>
+    </details>
+  </section>
+
+{% endblock %}
